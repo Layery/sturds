@@ -9,14 +9,37 @@ Predis\Autoloader::register();
 $server = [
 	'host' => '127.0.0.1',
 	'port' => '6379',
-	'db' => 0
+	'database' => 0
 
 ];
 $client = new Predis\Client($server);
 
 if (IS_AJAX && $_REQUEST['cmd'] == 'create') {
-    
+    $user1 = [
+        'name' => $_POST['name'],
+        'password' => $_POST['password'],
+        'age' => rand(20, 50)
+    ];
+    $rs = $client->hmset('myhash', $user1);
+    $rs = $client->expire('myhash', 100);
+    register($user1, 1);
+
+    $user2 = [
+        'name' => 'liulongfei',
+        'password' => 'weidingyiasdfas',
+        'age' => rand(40, 60)
+    ];
+    register($user2, 2);
+
 }
+function register($userInfo, $index)
+{
+    global $client;
+    $client->set('user:'. $index. ':username', $userInfo['name']);
+    $client->set('user:'. $index. ':password', $userInfo['password']);
+    $client->set('user:'. $index. ':age', $userInfo['age']);
+}
+// http://www.cnblogs.com/nixi8/p/6708252.html
 ?>
 
 
@@ -42,7 +65,7 @@ if (IS_AJAX && $_REQUEST['cmd'] == 'create') {
                 <input type="password" class="form-control" id="password" placeholder="Password">
             </div>
             <input type="hidden" name="cmd" value="create">
-            <button type="button" class="btn btn-success">Submit</button>
+            <button type="button" class="btn btn-default">Submit</button>
         </form>
     </div>
 </div>
