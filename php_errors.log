@@ -1,0 +1,5 @@
+[01-Mar-2018 14:53:56 UTC] PHP Warning:  include(D:/www/func.php): failed to open stream: No such file or directory in E:\www\sturds\index.php on line 2
+[01-Mar-2018 14:53:56 UTC] PHP Warning:  include(): Failed opening 'D:/www/func.php' for inclusion (include_path='.;C:\php\pear') in E:\www\sturds\index.php on line 2
+[01-Mar-2018 14:53:56 UTC] PHP Warning:  require(./predis/src/Autoloader.php): failed to open stream: No such file or directory in E:\www\sturds\index.php on line 3
+[01-Mar-2018 14:53:56 UTC] PHP Fatal error:  require(): Failed opening required './predis/src/Autoloader.php' (include_path='.;C:\php\pear') in E:\www\sturds\index.php on line 3
+[01-Mar-2018 15:00:10 UTC] PHP Fatal error:  Maximum execution time of 30 seconds exceeded in E:\www\sturds\predis\src\Connection\StreamConnection.php on line 311
