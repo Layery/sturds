@@ -38,22 +38,6 @@ function test($param1, $param2)
     print_r($param2);
     die;
 }
-/*
-public function subscribe($channels, Closure $callback, $connection = null, $method = 'subscribe')
-{
-    $loop = $this->connection($connection)->pubSubLoop();// loop
-
-    call_user_func_array([$loop, $method], (array) $channels);// call user func array
-
-    foreach ($loop as $message) {
-        if ($message->kind === 'message' || $message->kind === 'pmessage') {
-            call_user_func($callback, $message->payload, $message->channel);// call_user_func
-        }
-    }// loop like message
-
-    unset($loop);
-}//Subscribe*/
-
 
 if (IS_AJAX && $_POST['cmd'] == 'register') {
     $params = [
@@ -175,6 +159,8 @@ function logPrimaryKey($tabel)
     return $client->incr($key);
 }
 // http://www.cnblogs.com/nixi8/p/6708252.html
+
+// http://blog.csdn.net/lijingshan34/article/details/51991595
 ?>
 
 
