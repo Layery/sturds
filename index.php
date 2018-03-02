@@ -1,11 +1,11 @@
-<?php 
+<?php
+error_reporting(E_ALL & ~E_NOTICE);
 include "D:/www/func.php";
 require "./predis/src/Autoloader.php";
 
 define('ROOT', __DIR__);
 define('IS_AJAX',isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest');
 Predis\Autoloader::register();
-
 $server = [
 	'host' => '127.0.0.1',
 	'port' => '6379',
@@ -13,6 +13,47 @@ $server = [
 
 ];
 $client = new Predis\Client($server);
+
+// 页面初始化 监听消息
+if (IS_AJAX && $_GET['cmd'] == 'run') {
+    $channels = 'news';
+    $callback = 'test';
+    $method = 'subscribe';
+    $loop = $client->pubSubLoop();
+    $rs = call_user_func_array([$loop, $method], [$channels]);
+    foreach ($loop as $message) {
+        print_r($message);
+        if ($message->kind === 'message' || $message->kind == 'pmessage') {
+            call_user_func($callback, $message->payload, $message->channel);
+        }
+    }
+    unset($loop);
+}
+
+function test($param1, $param2)
+{
+    print_r($param1);
+    echo '-----';
+
+    print_r($param2);
+    die;
+}
+/*
+public function subscribe($channels, Closure $callback, $connection = null, $method = 'subscribe')
+{
+    $loop = $this->connection($connection)->pubSubLoop();// loop
+
+    call_user_func_array([$loop, $method], (array) $channels);// call user func array
+
+    foreach ($loop as $message) {
+        if ($message->kind === 'message' || $message->kind === 'pmessage') {
+            call_user_func($callback, $message->payload, $message->channel);// call_user_func
+        }
+    }// loop like message
+
+    unset($loop);
+}//Subscribe*/
+
 
 if (IS_AJAX && $_POST['cmd'] == 'register') {
     $params = [
@@ -36,16 +77,37 @@ if (IS_AJAX && $_POST['cmd'] == 'login') {
         }
     }
     $name = $_POST['name'];
-    $result = getUserInfo($name);
+    $password = $_POST['password'];
+    if (empty($name)) ajaxReturn('用户名不允许为空');
+    if (empty($password)) ajaxReturn('密码不允许为空');
+    $result = checkLogin($name, $password);
     if ($result['status'] != 1) {
-        ajaxReturn('账户或密码错误');
+        ajaxReturn($result['desc']);
     }
     $result = $result['data'];
+    $_COOKIE['userToken'] = base64_encode(json_encode([
+        'name' => $result['name'],
+        'age' => $result['age']
+    ]));
     setcookie('userToken',base64_encode(json_encode([
         'name' => $result['name'],
         'age' => $result['age']
     ])), 0);
     ajaxReturn('ok');
+}
+
+//loginOut
+if (IS_AJAX && $_POST['cmd'] == 'loginOut') {
+    if ($_COOKIE['userToken'] == '') {
+        ajaxReturn('您尚未登录');
+    }
+    setcookie('userToken', '');
+    ajaxReturn('ok');
+}
+
+// pub & sub
+if (IS_AJAX && $_POST['cmd'] == 'sendMsg') {
+    ajaxReturn('hahaha');
 }
 
 function ajaxReturn($msg, $type = 'json') {
@@ -57,11 +119,10 @@ function ajaxReturn($msg, $type = 'json') {
             $result = json_encode($msg);
             break;
     }
-    exit($result);
+    return exit($result);
 }
 
-
-function getUserInfo($name)
+function checkLogin($name, $password)
 {
     global $client;
     $return = [];
@@ -71,6 +132,11 @@ function getUserInfo($name)
         $return = ['status' => 0, 'desc' => '未注册', 'data' => []];
         return $return;
     }
+    $tmp = $client->get('user:uid:'. $id.':password');
+    if (md5($password) != substr($tmp, 0, -5)) {
+        $return = ['status' => 0, 'desc' => '账号或密码错误', 'data' => []];
+        return $return;
+    }
     $key = 'user:uid:'. $id. '*';
     $list = $client->keys($key);
     foreach ($list as $val) {
@@ -78,9 +144,9 @@ function getUserInfo($name)
         $fields = end($fields);
         $return[$fields] = $client->get($val);
     }
+    unset($return['password']);
     return ['status' => 1, 'desc' => 'true', 'data' => $return];
 }
-
 
 function register($userInfo)
 {
@@ -124,9 +190,10 @@ function logPrimaryKey($tabel)
 <body>
 <div class="container">
     <div class="row" style="margin-top: 55px;">
-        <div class=".col-xs-12 .col-md-8">
-            <p class="lead" style="display: none">
-
+        <div class=".col-xs-12 .col-md-8 div-lead" style="display: <?php echo $_COOKIE['userToken'] ? 'block' : 'none'; ?>">
+            ^_^ 登录成功~
+            <p class="lead">
+                <?php echo json_decode(base64_decode($_COOKIE['userToken']))->name; ?>
             </p>
         </div>
         <div class=".col-xs-6 .col-md-4"></div>
@@ -144,15 +211,22 @@ function logPrimaryKey($tabel)
             <button type="button" class="btn btn-default" name="register">register</button>
 
             <button type="button" class="btn btn-default" name="login">login</button>
+
+            <button type="button" class="btn btn-danger" name="loginOut">login out</button>
         </form>
+    </div>
+    <hr>
+    <div class="row" style="width: 60%">
+        <div class="form-group">
+            <input type="text" class="form-control" name="message" value="" placeholder="测试发送消息">
+        </div>
+           <button type="button" class="btn btn-success" name="sendMsg">send msg</button>
     </div>
 </div>
 </body>
 </html>
 <script type="text/javascript">
-    var loginStatus;
     $("button").on('click', function() {
-        loginStatus = 0;
         var cmd = $(this).attr('name');
         var data = {
             name: $("#username").val(),
@@ -160,15 +234,41 @@ function logPrimaryKey($tabel)
             cmd: cmd
         };
         $.post('index.php?', data, function(e) {
-            if (e !='ok') {
-                alert(e);
+            switch (cmd) {
+                case 'login':
+                    if (e == 'ok') {
+                        $(".lead").html('<?php echo json_decode(base64_decode($_COOKIE['userToken']))->name; ?>');
+                        $(".div-lead").show();
+                        window.location.reload();
+                    } else {
+                        alert(e);
+                        return false;
+                    }
+                    break;
+                case 'loginOut':
+                    if (e == 'ok') {
+                        alert('退出成功');
+                        window.location.reload();
+                    } else {
+                        alert(e);
+                    }
+                    break;
+                case 'register':
+                    alert(e);
+                    break;
+
+                case 'sendMsg':
+                    alert(e);
+                    break;
+                default:
+                    break;
             }
-            loginStatus = 1;
-            console.log(loginStatus);
         }, 'json');
     });
-    console.log(loginStatus + 'ppp');
-    if (loginStatus) {
-        $(".lead").text('asdfadfasdf').show();
-    }
+
+    $(function() {
+        $.get('index.php', {cmd: 'run'}, function(e) {
+            alert(e);
+        }, 'json');
+    });
 </script>
