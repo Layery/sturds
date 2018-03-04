@@ -67,3 +67,8 @@ Stack trace:
 [02-Mar-2018 14:16:38 UTC] PHP Fatal error:  Maximum execution time of 30 seconds exceeded in E:\www\sturds\predis\src\Connection\StreamConnection.php on line 311
 [02-Mar-2018 14:16:46 UTC] PHP Fatal error:  Maximum execution time of 30 seconds exceeded in E:\www\sturds\predis\src\Connection\StreamConnection.php on line 311
 [02-Mar-2018 14:17:16 UTC] PHP Fatal error:  Maximum execution time of 30 seconds exceeded in E:\www\sturds\predis\src\Connection\StreamConnection.php on line 311
+[04-Mar-2018 04:39:25 UTC] PHP Warning:  mb_convert_encoding(): Unable to detect character encoding in E:\www\sturds\index.php on line 89
+[04-Mar-2018 04:39:28 UTC] PHP Warning:  mb_convert_encoding(): Unable to detect character encoding in E:\www\sturds\index.php on line 89
+[04-Mar-2018 04:39:31 UTC] PHP Warning:  mb_convert_encoding(): Unable to detect character encoding in E:\www\sturds\index.php on line 89
+[04-Mar-2018 04:39:34 UTC] PHP Warning:  mb_convert_encoding(): Unable to detect character encoding in E:\www\sturds\index.php on line 89
+[04-Mar-2018 04:39:37 UTC] PHP Warning:  mb_convert_encoding(): Unable to detect character encoding in E:\www\sturds\index.php on line 89

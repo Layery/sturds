@@ -20,13 +20,14 @@ $client = new Predis\Client($server + array('read_write_timeout' => 0));
 // Initialize a new pubsub consumer.
 $pubsub = $client->pubSubLoop();
 // Subscribe to your channels
-$pubsub->subscribe('news', 'notifications');
+$pubsub->subscribe('news', 'subscribe');
 
 // Start processing the pubsup messages. Open a terminal and use redis-cli
 // to push messages to the channels. Examples:
 //   ./redis-cli PUBLISH notifications "this is a test"
 //   ./redis-cli PUBLISH control_channel quit_loop
 foreach ($pubsub as $message) {
+    print_r($message);
     switch ($message->kind) {
         case 'subscribe':
             echo "Subscribed to {$message->channel}", PHP_EOL;
@@ -36,7 +37,7 @@ foreach ($pubsub as $message) {
             // 取消订阅
             if ($message->channel == 'control_channel') {
                 if ($message->payload == 'quit_loop') {
-                    echo 'Aborting pubsub loop...', PHP_EOL;
+                    echo 'do not subscribe channel '. $message->channel, PHP_EOL;
                     $pubsub->unsubscribe();
                 } else {
                     echo "Received an unrecognized command: {$message->payload}.", PHP_EOL;
@@ -44,7 +45,8 @@ foreach ($pubsub as $message) {
             } else {
                 if ($message !== false && $message->kind == 'message') {
                     $msgKey = 'user:channel:'. $message->channel;
-                    echo "set message key: ". $msgKey, PHP_EOL;
+                    echo "set message key ". $msgKey, PHP_EOL;
+                    call_user_func('callback', $message);
                 } else {
                     echo "undefined error";
                 }
@@ -58,10 +60,18 @@ foreach ($pubsub as $message) {
 // desynchronizations between the client and the server.
 unset($pubsub);
 
+function callback ($obj) {
 
-
-
-
+    $callbackServer = [
+        'host' => 'localhost',
+        'port' => '6379',
+        'database' => 1
+    ];
+    $redis = new Predis\Client($callbackServer);
+    $key = 'user:channel:'. $obj->channel;
+    $redis->set($key, $obj->payload);
+    echo $redis->get($key), PHP_EOL;
+}
 
 
 
