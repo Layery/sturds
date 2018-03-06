@@ -19,16 +19,6 @@ $server = [
 ];
 $client = new Predis\Client($server);
 
-
-function test($param1, $param2)
-{
-    print_r($param1);
-    echo '-----';
-
-    print_r($param2);
-    die;
-}
-
 if (IS_AJAX && $_POST['cmd'] == 'register') {
     $params = [
         'name' => $_POST['name'],
@@ -99,7 +89,6 @@ if (IS_AJAX && $_POST['cmd'] == 'unsub') {
     ajaxReturn('ok');
 }
 
-
 function ajaxReturn($msg, $type = 'json')
 {
     switch ($type) {
@@ -169,6 +158,8 @@ function logPrimaryKey($tabel)
 // http://www.cnblogs.com/nixi8/p/6708252.html
 
 // http://blog.csdn.net/lijingshan34/article/details/51991595
+
+// https://www.bilibili.com/video/av15978264/
 ?>
 
 
